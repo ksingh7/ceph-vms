@@ -1,0 +1,77 @@
+- Login to node1 and switch to root
+
+$ vagrant ssh node1
+$ sudo su -
+
+- Setup SSH login between nodes
+-- Root Password : vagrant
+
+# ssh-keygen
+# ssh-copy-id root@node2
+# ssh-copy-id root@node3
+# ssh node2 hostname
+# ssh node3 hostname
+
+
+- Install Ceph Giant using ceph-deploy on node1 , node2 and node3
+
+# rpm -Uhv http://ceph.com/rpm-hammer/el7/noarch/ceph-release-1-0.el7.noarch.rpm 
+# yum install ceph-deploy -y
+# mkdir /etc/ceph ; cd /etc/ceph
+# ceph-deploy new node1
+# ceph-deploy install node1 node2 node3 --release hammer
+# ceph -v
+
+- Create initial monitors 
+
+# ceph-deploy mon create-initial
+# ceph -s
+
+- Create OSD's
+
+# ceph-deploy disk list node1
+# ceph-deploy disk zap node1:sdb node1:sdc node1:sdd
+# ceph-deploy osd create node1:sdb node1:sdc node1:sdd
+# ceph -s
+
+# echo "public network = 192.168.100.0/24" >> /etc/ceph/ceph.conf
+
+
+- Install ceph-dash
+
+# yum install -y python-pip git
+# pip install --upgrade jinja2
+# git clone http://github.com/Crapworks/ceph-dash.git
+# python /etc/ceph/ceph-dash/ceph-dash.py &
+
+Open browser on host and navigate to http://192.168.100.101:5000/
+
+# pkill -9 python
+
+- Create node2 and node3 as Ceph monitors
+
+# ceph-deploy mon create node2 node3
+# ceph -s
+# ceph mon stat
+
+- Create OSD's on node2 and node3
+
+# ceph-deploy disk list node2 node3
+# ceph-deploy disk zap node2:sdb node2:sdc node2:sdd node3:sdb node3:sdc node3:sdd
+# ceph-deploy osd create node2:sdb node2:sdc node2:sdd node3:sdb node3:sdc node3:sdd
+# ceph -s
+
+- Make your cluster healthy
+
+# ceph osd pool set rbd pg_num 256
+# ceph osd pool set rbd pgp_num 256
+# ceph -s
+
+- Check status using ceph-dash
+
+# python /etc/ceph/ceph-dash/ceph-dash.py &
+Open browser on host and navigate to http://192.168.100.101:5000/
+# pkill -9 python
+
+
+
